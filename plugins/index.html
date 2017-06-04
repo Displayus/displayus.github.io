@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="css/material/material.min.css" rel="stylesheet" />
+    <script src="pluginlist.js"></script>
+    <link href="css/waves.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+    <script src="js/waves.min.js"></script>
+    <script src="js/jquery-3.1.1.min.js"></script>
+    <script>
+        //https://stackoverflow.com/a/14446538
+        function readFile(file, cb)
+        {
+            var rawFile = new XMLHttpRequest();
+            rawFile.open("GET", file, true);
+            rawFile.onreadystatechange = function ()
+            {
+                if (rawFile.readyState === 4)
+                {
+                    if (rawFile.status === 200 || rawFile.status == 0)
+                    {
+                        var allText = rawFile.responseText;
+                        cb(allText);
+                    }
+                    else
+                        cb(false)
+                }
+            }
+            rawFile.send(null);
+        }
+        window.addEventListener("load", function ()
+        {
+            pluginlist.forEach(function (guid)
+            {
+                readFile("files/" + guid + "/info.json", function (res)
+                {
+                    try
+                    {
+                        res = JSON.parse(res);
+                    }
+                    catch (e)
+                    {
+                        console.error(e);
+                        res = false;
+                    }
+                    if (res)
+                    {
+                        loadedplugindata(res);
+                    }
+                    else
+                        console.error("Error loading plugin data: " + guid)
+                });
+            })
+        });
+        var itemsmargin = { x: 30, y: 25 };
+        var itemsdime = { width: 250, height: 315 };
+        var dontchangepositions = false;
+        var firstsetpos = true;
+        function setpositions(x)
+        {
+            var cont = document.getElementById(x);
+
+            var pluginitems = cont.children;
+            var cols = Math.min(Math.floor((innerWidth - itemsmargin.x) / (itemsdime.width + itemsmargin.x)), pluginitems.length);
+
+            var itemsmarginx = itemsmargin.x + (innerWidth - (Math.floor(cols) * (itemsdime.width + itemsmargin.x) + itemsmargin.x)) / (cols + 1);
+            cols = Math.floor(cols);
+            var rows = Math.floor(pluginitems.length / cols);
+            var lastx;
+            for (var i = 0, itemsl = pluginitems.length; i < itemsl; i++)
+            {
+                var item = pluginitems[i];
+                var marginx = itemsmarginx;
+                item.style.left = ((i % cols)) * (marginx + itemsdime.width) + marginx + "px";
+                item.style.top = (Math.floor(i / cols)) * (itemsmargin.y + itemsdime.height) + itemsmargin.y * 2 + "px";
+            }
+            $(cont).height(rows * 250 - 60 + (x == "plugincards" ? 180 : 110));
+        }
+        window.addEventListener("resize", function ()
+        {
+            setpositions("plugincards");
+            setpositions("itemcards");
+        })
+        var plugins = {};
+        function itemimgload(img, itemid, isplugin)
+        {
+            var cont = document.getElementById((isplugin ? "plugin-" : "item-") + itemid);
+            var c = document.querySelector("#" + (isplugin ? "plugin-" : "item-") + itemid + " > canvas");
+            if (c)
+            {
+            }
+            else
+            {
+                c = document.createElement("canvas");
+                c.height = 250;
+                c.width = 250;
+                c.style.position = "absolute";
+                c.style.left = "0px";
+                c.style.top = "250px";
+                c.style.zIndex = "-1";
+                c.setAttribute("class", "bluritemcanvas");
+                cont.appendChild(c);
+            }
+            var ctx = c.getContext("2d");
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.drawImage(img, 0, 0, c.width, 75);
+            //boxBlurCanvasRGBA(c, 0, 0, c.width, c.height, 0);
+
+
+
+        }
+        function loadedplugindata(data)
+        {
+            console.log(data);
+                var plugin = data.guid;
+                plugins[plugin] = data;
+                ///////////////////////////////////
+                var sett = sett || {};
+                sett.buttons = sett.buttons || {};
+                var buttons = sett.buttons;
+
+                buttons.plugin = buttons.plugin || {};
+                var infob, viewb, deleteb,installb;
+            
+                viewb = false;//checkshowbutton(buttons.plugin, "view");
+                viewb = viewb ? '<div  onclick="viewbutton(\'' + plugin + '\',false)" class="viewbutton" style="left:0px;width:50px;height:50px;position:relative;"><svg style="top:-12.5px;left:-12.5px;position:absolute;width:75px;height:75px;">&#65279;<path fill="rgb(70,220,70)" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 38,33.1538C 40.6765,33.1538 42.8462,35.3235 42.8462,38C 42.8462,40.6765 40.6765,42.8461 38,42.8461C 35.3235,42.8461 33.1539,40.6765 33.1539,38C 33.1539,35.3235 35.3236,33.1538 38,33.1538 Z M 38,25.0769C 49.3077,25.0769 59,33.1538 59,38C 59,42.8461 49.3077,50.9231 38,50.9231C 26.6923,50.9231 17,42.8461 17,38C 17,33.1538 26.6923,25.0769 38,25.0769 Z M 38,29.1154C 33.0932,29.1154 29.1154,33.0932 29.1154,38C 29.1154,42.9068 33.0932,46.8846 38,46.8846C 42.9068,46.8846 46.8846,42.9068 46.8846,38C 46.8846,33.0932 42.9068,29.1154 38,29.1154 Z "></path></svg></div>' : "";
+                infob = false;//checkshowbutton(buttons.plugin, "edit");
+                infob = (infob ? ' <div  onclick="infobutton(\'' + plugin + '\',false)" class="deletebutton" style="left:0px;width:50px;height:50px;position:relative;"><svg style="top:-12.5px;left:-12.5px;position:absolute;width:75px;height:75px;">&#65279;<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 31.6666,30.0834L 42.7499,30.0834L 42.7499,33.2501L 42.7499,52.2501L 45.9165,52.2501L 45.9165,57.0001L 31.6666,57.0001L 31.6666,52.2501L 34.8332,52.2501L 34.8332,34.8335L 31.6666,34.8335L 31.6666,30.0834 Z M 38.7917,19C 40.9778,19 42.75,20.7722 42.75,22.9583C 42.75,25.1445 40.9778,26.9167 38.7917,26.9167C 36.6055,26.9167 34.8333,25.1445 34.8333,22.9583C 34.8333,20.7722 36.6055,19 38.7917,19 Z "></path></svg></div>' : '');
+                deleteb = false//checkshowbutton(buttons.plugin, "delete");
+                deleteb = deleteb ? '<div  onclick="deletebutton(\'' + plugin + '\',false)" class="deletebutton" style="left:0px;width:50px;height:50px;position:relative;"><svg style="top:-12.5px;left:-12.5px;position:relative;width:75px;height:75px;">&#65279;<path fill="rgb(255,60,60)" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 25.3333,23.75L 50.6667,23.75C 51.5411,23.75 51.8541,27.3125 51.8541,27.3125L 24.1458,27.3125C 24.1458,27.3125 24.4589,23.75 25.3333,23.75 Z M 35.625,19.7917L 40.375,19.7917C 40.8122,19.7917 41.9583,20.9378 41.9583,21.375C 41.9583,21.8122 40.8122,22.9584 40.375,22.9584L 35.625,22.9584C 35.1878,22.9584 34.0416,21.8122 34.0416,21.375C 34.0416,20.9378 35.1878,19.7917 35.625,19.7917 Z M 27.7083,28.5L 48.2916,28.5C 49.1661,28.5 49.875,29.2089 49.875,30.0834L 48.2916,53.8334C 48.2916,54.7078 47.5828,55.4167 46.7083,55.4167L 29.2917,55.4167C 28.4172,55.4167 27.7083,54.7078 27.7083,53.8334L 26.125,30.0834C 26.125,29.2089 26.8339,28.5 27.7083,28.5 Z M 30.0833,31.6667L 30.4792,52.25L 33.25,52.25L 32.8542,31.6667L 30.0833,31.6667 Z M 36.4167,31.6667L 36.4167,52.25L 39.5833,52.25L 39.5833,31.6667L 36.4167,31.6667 Z M 43.1458,31.6667L 42.75,52.25L 45.5208,52.25L 45.9167,31.6667L 43.1458,31.6667 Z "></path></svg></div>' : "";
+                installb = true;
+                installb = installb ? ' <div  onclick="installbutton(\'' + plugin + '\',false)" class="installbutton" style="left:0px;width:50px;height:50px;position:relative;"><svg style="top:5px;left:0px;position:absolute;width:75px;height:75px;" viewBox="0 0 125 100">&#65279;<g transform="translate(-8,-990.36218)"><path fill="rgb(70,220,70)" d="m 15.99986,1014.3621 c -1.13458,-9e-4 -2.0208,1.0331 -1.99954,2.0198 l 0,21.9838 c 10e-5,1.0453 0.95282,1.9963 1.99998,1.9964 l 67.9996,0 c 1.04716,-10e-5 1.99988,-0.9511 1.99998,-1.9964 l 0,-21.9838 c 0.015,-1.0548 -0.94305,-2.0198 -1.9998,-2.0198 -1.05675,0 -2.01514,0.965 -2.00016,2.0198 l 0,19.9874 -63.99964,0 0,-19.9874 c 0.0244,-1.1326 -0.87244,-2.0189 -2.00042,-2.0198 z" style="text-indent:0;text-transform:none;direction:ltr;block-progression:tb;baseline-shift:baseline;color:#000000;enable-background:accumulate;" fill="#000000" fill-opacity="1" fill-rule="nonzero" stroke="none" marker="none" visibility="visible" display="inline" overflow="visible"/><path fill="rgb(70,220,70)" d="m 49.99998,1026.3619 c -0.4628,0 -1.0773,-0.2799 -1.3755,-0.5639 l -17.0003,-15.9997 c -0.7723,-0.747 -0.8618,-1.9572 -0.078,-2.8281 0.7007,-0.7786 2.0673,-0.798 2.8282,-0.078 l 13.6252,12.8435 0,-53.37343 c 0,-1.1046 0.8954,-2 2,-2 1.1046,0 2.0001,0.8954 2.0001,2 l 0,53.37343 13.6252,-12.8435 c 0.7608,-0.7199 2.0938,-0.6688 2.8281,0.078 0.7752,0.7885 0.7062,2.0925 -0.078,2.8281 l -17.0002,15.9997 c -0.4611,0.4701 -0.9052,0.556 -1.3748,0.5639 z" style="text-indent:0;text-transform:none;direction:ltr;block-progression:tb;baseline-shift:baseline;color:#000000;enable-background:accumulate;" fill="#000000" fill-opacity="1" fill-rule="nonzero" stroke="none" marker="none" visibility="visible" display="inline" overflow="visible"/></g></svg></div>' :""
+            var pcih = document.getElementById("plugincards").innerHTML, pcihi = pcih.indexOf('<div class="addplugin" id="addplugin"');
+           
+            var addtxt = ('<div class="card" onmouseout="this.style.height=itemsdime.height+\'px\';document.getElementById(\'buttons-plugin-' + plugin + '\').style.height=\'0px\';this.style.zIndex=\'0\'" onmouseover="this.style.height=itemsdime.height+75+\'px\';document.getElementById(\'buttons-plugin-' + plugin + '\').style.height=\'200px\';this.style.zIndex=\'10\';" id="plugin-' + plugin + '" onclick="if(event.target.getAttribute(\'itemclick\'))pluginclick(\'' + plugin + '\')" plugin="' + plugin + '" itemclick="true"> <img onload="itemimgload(this,\'' + plugin + '\',true)"  itemclick="true" class="card-img-top img-fluid" src="' + "files/" + plugin + "/icon.png" + '" alt="Card image cap"> <div class="card-block"> <div style="left:0;width:250px;margin:0;position:relative;" itemclick="true"><h4 class="card-title">' + data.title + '</h4> <p class="card-text">' + "" + '</p></div><div class="buttons-plugin" id="buttons-plugin-' + plugin + '">' + viewb + deleteb + infob + installb + '</div> <div class="developerspan"><span>Developer: </span><span></span><span>'+data.developer+'</span></div></div> </div>');;
+                if (pcihi > -1)
+                {
+                    var newaddedelement = document.createElement("div");
+
+                    document.getElementById("plugincards").insertBefore(newaddedelement, document.getElementById("addplugin"))
+                    newaddedelement.outerHTML = addtxt;
+                }
+                else
+                    document.getElementById("plugincards").innerHTML += addtxt;
+                setTimeout(function ()
+                {
+                    Waves.attach(".topbutton", []);
+                    Waves.attach(".editbutton", []);
+                    Waves.attach(".deletebutton", []);
+                    Waves.attach(".viewbutton", []);
+                    Waves.attach(".installbutton", []);
+                    Waves.init();
+                    setpositions("plugincards")
+                }, 0);
+        }
+        function installbutton(plugin)
+        {
+            var dl = document.createElement("a");
+            dl.setAttribute("href", "./files/" + plugin + "/plugin.dus");
+            console.log("files/" + plugin + "/plugin.dus");
+            dl.setAttribute("download", plugins[plugin].title+".dus");
+            dl.click();
+            console.log(dl);
+        }
+    </script>
+</head>
+<body>
+    <div style="width:100%;height:calc(100% - 50px);top:50px;position:fixed;left:0;opacity:1;z-index:1;overflow-y:auto;" id="pluginscontainer"
+         class="cardcont">
+        <div class="card-columns" id="plugincards" style="padding-bottom:200px;">
+        </div>
+    </div>
+</body>
+</html>

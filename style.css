@@ -182,7 +182,14 @@ li.title {
     font-size: 1em;
 }
 
+#footercontent ul li a {
+    list-style-type: none;
+    color: white;
+    opacity: 0.9;
+    text-decoration: none;
+}
 #footercontent ul li {
+    
     list-style-type: none;
     color: white;
     opacity: 0.9;
